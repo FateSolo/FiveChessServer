@@ -564,3 +564,4 @@ void Evaluation::AnalysisLine(unsigned char *position, int GridNum, int StonePos
         }
     }
 }
+

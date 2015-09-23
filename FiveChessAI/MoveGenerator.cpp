@@ -28,3 +28,4 @@ int MoveGenerator::CreatePossibleMove(unsigned char position[GRID_NUM][GRID_NUM]
 
 	return m_nMoveCount;
 }
+

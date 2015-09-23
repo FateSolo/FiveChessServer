@@ -54,3 +54,5 @@ def update(username, password, nickname, win, lose, draw):
     conn.commit()
     cursor.close()
     conn.close()
+
+

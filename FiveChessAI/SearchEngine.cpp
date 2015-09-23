@@ -28,3 +28,4 @@ void SearchEngine::MakeMove(STONEMOVE *move, int type) {
 void SearchEngine::UnMakeMove(STONEMOVE *move) {
 	CurPosition[move->y][move->x] = NOSTONE;
 }
+

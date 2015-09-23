@@ -42,3 +42,4 @@ const unsigned char PosValue[GRID_NUM][GRID_NUM] = {
 };
 
 #endif
+
