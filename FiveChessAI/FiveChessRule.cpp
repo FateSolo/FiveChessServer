@@ -1,7 +1,7 @@
 #include <string.h>
 
-#define GRID_NUM		15
-#define GRID_COUNT		GRID_NUM * GRID_NUM
+#define GRID_NUM        15
+#define GRID_COUNT        GRID_NUM * GRID_NUM
 
 bool isWin;
 

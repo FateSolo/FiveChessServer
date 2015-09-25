@@ -2,6 +2,8 @@
 #define   _CHESS_DEFINE_H 
 
 #include <string.h>
+#include <stdlib.h>
+#include <time.h>
 
 #define GRID_NUM        15
 #define GRID_COUNT      GRID_NUM * GRID_NUM
@@ -40,6 +42,21 @@ const unsigned char PosValue[GRID_NUM][GRID_NUM] = {
     { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
 };
+
+enum ENTRY_TYPE {
+    exact,
+    lower_bound,
+    upper_bound
+}; 
+
+typedef struct _hashitem {
+    unsigned long long checksum;
+
+    ENTRY_TYPE entry_type;
+
+    int depth;
+    int eval;
+} HashItem;
 
 #endif
 
