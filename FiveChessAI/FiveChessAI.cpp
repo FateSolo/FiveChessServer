@@ -1,5 +1,7 @@
 #include "AlphaBeta.h"
 #include "AlphaBeta_TT.h"
+#include "AlphaBeta_HH.h"
+#include "AlphaBeta_TT_HH.h"
 
 extern "C" {
     int GetAGoodMove(unsigned char position[GRID_COUNT], int level, int type) {
@@ -11,6 +13,12 @@ extern "C" {
 
         case 1:
             se = new AlphaBeta_TT;
+
+        case 2:
+            se = new AlphaBeta_HH;
+
+        case 3:
+            se = new AlphaBeta_TT_HH;
         }
 
         se->SetSearchDepth(level);

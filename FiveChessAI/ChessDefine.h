@@ -23,6 +23,8 @@
 typedef struct _stonemove {
     unsigned char x;
     unsigned char y;
+
+    int score;
 } STONEMOVE;
 
 const unsigned char PosValue[GRID_NUM][GRID_NUM] = {

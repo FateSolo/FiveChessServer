@@ -12,8 +12,8 @@ void HistoryHeuristic::ResetHistoryTable() {
     memset(m_HistoryTable, 10, GRID_COUNT * sizeof(int));
 }
 
-int HistoryHeuristic::GetHistoryScore(STONEMOVE *move) {
-    return m_HistoryTable[move->x][move->y];
+void HistoryHeuristic::GetHistoryScore(STONEMOVE *move) {
+    move->score = m_HistoryTable[move->x][move->y];
 }
 
 void HistoryHeuristic::EnterHistoryScore(STONEMOVE *move, int depth) {
@@ -24,10 +24,10 @@ void HistoryHeuristic::MergeSort(STONEMOVE *source, int n) {
     int s = 1;
 
     while(s < n) {
-        MergePass(source, m_TargetBuff, s, n, direction);
+        MergePass(source, m_TargetBuff, s, n);
         s += s;
         
-        MergePass(m_TargetBuff, source, s, n, direction);
+        MergePass(m_TargetBuff, source, s, n);
         s += s;
     }
 }
@@ -56,7 +56,7 @@ void HistoryHeuristic::Merge(STONEMOVE *source, STONEMOVE *target, int l, int m,
     int k = l;
         
     while((i <= m) && (j <= r)) {
-        if (source[i].Score >= source[j].Score) {
+        if (source[i].score >= source[j].score) {
             target[k++] = source[i++];
         }
         else {

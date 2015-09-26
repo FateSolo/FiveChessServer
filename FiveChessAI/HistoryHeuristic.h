@@ -11,7 +11,7 @@ public:
 
     void ResetHistoryTable();
 
-    int GetHistoryScore(STONEMOVE *move);
+    void GetHistoryScore(STONEMOVE *move);
     void EnterHistoryScore(STONEMOVE *move, int depth);
 
     void MergeSort(STONEMOVE *source, int n);
