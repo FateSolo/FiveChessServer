@@ -16,10 +16,14 @@ void MoveGenerator::AddMove(int nToX, int nToY, int nPly) {
 }
 
 int MoveGenerator::CreatePossibleMove(unsigned char position[GRID_NUM][GRID_NUM], int nPly) {
+    return CreatePossibleMove(position, nPly, 0, GRID_NUM - 1, 0, GRID_NUM - 1);
+}
+
+int MoveGenerator::CreatePossibleMove(unsigned char position[GRID_NUM][GRID_NUM], int nPly, int top, int bottom, int left, int right) {
     m_nMoveCount = 0;
 
-    for (int i = 0; i < GRID_NUM; i++) {
-        for (int j = 0; j < GRID_NUM; j++) {
+    for (int i = top; i <= bottom; i++) {
+        for (int j = left; j <= right; j++) {
             if (position[i][j] == NOSTONE) {
                 AddMove(j, i, nPly);
             }

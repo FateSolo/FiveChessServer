@@ -1,7 +1,7 @@
 #include <string.h>
 
 #define GRID_NUM        15
-#define GRID_COUNT        GRID_NUM * GRID_NUM
+#define GRID_COUNT      GRID_NUM * GRID_NUM
 
 bool isWin;
 
@@ -12,23 +12,23 @@ void AnalysisLine(unsigned char position[GRID_NUM], int GridNum, int StonePos) {
 
     int left = StonePos, right = StonePos;
 
-    while(left > 0) {
-        if(position[left - 1] != position[StonePos]) {
+    while (left > 0) {
+        if (position[left - 1] != position[StonePos]) {
             break;
         }
 
         left--;
     }
 
-    while(right < GridNum) {
-        if(position[right + 1] != position[StonePos]) {
+    while (right < GridNum) {
+        if (position[right + 1] != position[StonePos]) {
             break;
         }
 
         right++;
     }
 
-    if(right - left > 3) {
+    if (right - left > 3) {
         isWin = true;
     }
 }

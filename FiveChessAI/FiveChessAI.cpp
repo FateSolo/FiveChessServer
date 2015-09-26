@@ -1,25 +1,8 @@
-#include "AlphaBeta.h"
-#include "AlphaBeta_TT.h"
-#include "AlphaBeta_HH.h"
-#include "AlphaBeta_TT_HH.h"
+#include "FinalSearchEngine.h"
 
 extern "C" {
-    int GetAGoodMove(unsigned char position[GRID_COUNT], int level, int type) {
-        SearchEngine *se;
-
-        switch(type) {
-        case 0:
-            se = new AlphaBeta;
-
-        case 1:
-            se = new AlphaBeta_TT;
-
-        case 2:
-            se = new AlphaBeta_HH;
-
-        case 3:
-            se = new AlphaBeta_TT_HH;
-        }
+    int GetAGoodMove(unsigned char position[GRID_COUNT], int level) {
+        SearchEngine *se = new FinalSearchEngine;
 
         se->SetSearchDepth(level);
 

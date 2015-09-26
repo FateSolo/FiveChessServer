@@ -10,6 +10,7 @@ public:
     ~MoveGenerator();
 
     int CreatePossibleMove(unsigned char position[GRID_NUM][GRID_NUM], int nPly);
+    int CreatePossibleMove(unsigned char position[GRID_NUM][GRID_NUM], int nPly, int top, int bottom, int left, int right);
 
     STONEMOVE m_MoveList[5][GRID_COUNT];
 

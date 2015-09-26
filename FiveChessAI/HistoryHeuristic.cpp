@@ -23,7 +23,7 @@ void HistoryHeuristic::EnterHistoryScore(STONEMOVE *move, int depth) {
 void HistoryHeuristic::MergeSort(STONEMOVE *source, int n) {
     int s = 1;
 
-    while(s < n) {
+    while (s < n) {
         MergePass(source, m_TargetBuff, s, n);
         s += s;
         
@@ -35,7 +35,7 @@ void HistoryHeuristic::MergeSort(STONEMOVE *source, int n) {
 void HistoryHeuristic::MergePass(STONEMOVE *source, STONEMOVE *target, int s, int n) {
     int i = 0;
     
-    while(i <= n - 2 * s) {
+    while (i <= n - 2 * s) {
         Merge(source, target, i, i + s - 1, i + 2 * s - 1);
         i = i + 2 * s;
     }
@@ -55,7 +55,7 @@ void HistoryHeuristic::Merge(STONEMOVE *source, STONEMOVE *target, int l, int m,
     int j = m + 1;
     int k = l;
         
-    while((i <= m) && (j <= r)) {
+    while ((i <= m) && (j <= r)) {
         if (source[i].score >= source[j].score) {
             target[k++] = source[i++];
         }
@@ -64,7 +64,7 @@ void HistoryHeuristic::Merge(STONEMOVE *source, STONEMOVE *target, int l, int m,
         }
     }
     
-    if(i > m) {
+    if (i > m) {
         for (int q = j; q <= r; q++) {
             target[k++] = source[q];
         }
