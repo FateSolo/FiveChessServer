@@ -145,7 +145,7 @@ class ChessServer(Protocol):
                     self.factory.status[self.factory.player.index(user)] = "/idle"
                 self.factory.status[self.factory.client.index(self)] = "/idle"
             elif user == "/AI":
-                nextStep = ai.GetAGoodMove(self.factory.chessBoard[self.factory.client.index(self)], 3, 1)
+                nextStep = ai.GetAGoodMove(self.factory.chessBoard[self.factory.client.index(self)], 3, 4)
                 a = nextStep / 100
                 b = nextStep - 100 * a
                 self.factory.chessBoard[self.factory.client.index(self)][b * 15 + a] = 0
