@@ -209,36 +209,39 @@ class ChessFactory(Factory):
     def next_step(self, client, msg):
         x, y, chessType = msg.split(' ')
         user = self.get_user(client, None)
-        user2 = self.get_user(None, user["status"])
-
         user["chessBoard"][int(y) * 15 + int(x)] = int(chessType)
 
-        if rule.GetIsWin(user["chessBoard"], int(x), int(y)):
-            self.send_to_client(client, "/Win")
-
-            if user["status"] != "/AI":
-                self.send_to_client(user2["client"], "/Lose " + str(x) + " " + str(y))
-                user2["status"] = "/idle"
-
-            user["status"] = "/idle"
-
-        elif user["status"] == "/AI":
-            nextStep = ai.GetAGoodMove(user["chessBoard"], 3)
-            a = nextStep / 100
-            b = nextStep - 100 * a
-
-            user["chessBoard"][b * 15 + a] = 0
-
-            if rule.GetIsWin(user["chessBoard"], a, b):
-                self.send_to_client(client, "/Lose " + str(a) + " " + str(b))
+        if user["status"] == "/AI":
+            if rule.GetIsWin(user["chessBoard"], int(x), int(y)):
+                self.send_to_client(client, "/Win")
                 user["status"] = "/idle"
 
             else:
-                self.send_to_client(client, "/NextStep " + str(a) + " " + str(b))
+                nextStep = ai.GetAGoodMove(user["chessBoard"], 3)
+                a = nextStep / 100
+                b = nextStep - 100 * a
+                user["chessBoard"][b * 15 + a] = 0
+
+                if rule.GetIsWin(user["chessBoard"], a, b):
+                    self.send_to_client(client, "/Lose " + str(a) + " " + str(b))
+                    user["status"] = "/idle"
+
+                else:
+                    self.send_to_client(client, "/NextStep " + str(a) + " " + str(b))
 
         else:
-            user2["chessBoard"][int(y) * 15 + int(x)] = int(chessType)
-            self.send_to_client(user2["client"], "/NextStep " + str(x) + " " + str(y))
+            user2 = self.get_user(None, user["status"])
+
+            if rule.GetIsWin(user["chessBoard"], int(x), int(y)):
+                self.send_to_client(client, "/Win")
+                user["status"] = "/idle"
+
+                self.send_to_client(user2["client"], "/Lose " + str(x) + " " + str(y))
+                user2["status"] = "/idle"
+
+            else:
+                user2["chessBoard"][int(y) * 15 + int(x)] = int(chessType)
+                self.send_to_client(user2["client"], "/NextStep " + str(x) + " " + str(y))
 
     def draw_chess(self, client, msg):
         user = self.get_user(client, None)
