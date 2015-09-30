@@ -89,6 +89,7 @@ def update(username, password, nickname, win, lose, draw):
         tmp += " where UserName = %s"
         args.append(username)
 
+        sqlStr += tmp
         cursor.execute(sqlStr, args)
         conn.commit()
 

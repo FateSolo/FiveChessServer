@@ -50,53 +50,6 @@ class ChessFactory(Factory):
         self.nickname = {}
         self.username = {}
 
-    def send_to_client(self, client, msg):
-        client.transport.write(msg)
-
-    def send_to_all(self, msg):
-        for client in self.client.keys():
-            self.send_to_client(client, msg)
-
-    def update_user_list(self):
-        user_list = "/UpdateUserList "
-        for nickname in self.nickname.keys():
-            user_list += nickname + ' '
-
-        return user_list[:-1]
-
-    def add_user(self, client, user):
-        msg = str(user[0]) + ' ' + str(user[1]) + ' ' + str(user[2]) + ' ' + str(user[3]) + ' ' + str(
-            user[4]) + ' ' + str(user[5])
-        self.send_to_client(client, msg)
-
-        self.nickname[str(user[2])] = str(user[0])
-        self.username[str(user[0])] = {
-            "client": client,
-            "nickname": str(user[2]),
-            "password": str(user[1]),
-            "win": int(user[3]),
-            "lose": int(user[4]),
-            "draw": int(user[5]),
-            "status": "/idle",
-            "level": 0,
-            "chessBoard": chessBoard()
-        }
-
-        user_list = self.update_user_list()
-        self.send_to_all(user_list)
-
-        self.client[client] = str(user[0])
-
-    def get_user(self, client, nickname):
-        if client is not None:
-            return self.username[self.client[client]]
-
-        elif nickname is not None:
-            return self.username[self.nickname[nickname]]
-
-        else:
-            return None
-
     def login(self, client, msg):
         username, password = msg.split(' ')
         user = query(username, None)
@@ -213,8 +166,7 @@ class ChessFactory(Factory):
 
         if user["status"] == "/AI":
             if rule.GetIsWin(user["chessBoard"], int(x), int(y)):
-                self.send_to_client(client, "/Win")
-                user["status"] = "/idle"
+                self.win_update(user)
 
             else:
                 nextStep = ai.GetAGoodMove(user["chessBoard"], 3)
@@ -223,8 +175,7 @@ class ChessFactory(Factory):
                 user["chessBoard"][b * 15 + a] = 0
 
                 if rule.GetIsWin(user["chessBoard"], a, b):
-                    self.send_to_client(client, "/Lose " + str(a) + " " + str(b))
-                    user["status"] = "/idle"
+                    self.lose_update(user, str(a), str(b), True)
 
                 else:
                     self.send_to_client(client, "/NextStep " + str(a) + " " + str(b))
@@ -233,23 +184,18 @@ class ChessFactory(Factory):
             user2 = self.get_user(None, user["status"])
 
             if rule.GetIsWin(user["chessBoard"], int(x), int(y)):
-                self.send_to_client(client, "/Win")
-                user["status"] = "/idle"
-
-                self.send_to_client(user2["client"], "/Lose " + str(x) + " " + str(y))
-                user2["status"] = "/idle"
+                self.win_update(user)
+                self.lose_update(user2, x, y, True)
 
             else:
                 user2["chessBoard"][int(y) * 15 + int(x)] = int(chessType)
-                self.send_to_client(user2["client"], "/NextStep " + str(x) + " " + str(y))
+                self.send_to_client(user2["client"], "/NextStep " + x + " " + y)
 
     def draw_chess(self, client, msg):
         user = self.get_user(client, None)
 
         if user["status"] == "/AI":
-            user["status"] = "/idle"
-
-            self.send_to_client(client, "/Draw")
+            self.draw_update(user, True)
 
         else:
             self.send_to_client(self.get_user(None, user["status"])["client"], "/IsDraw")
@@ -258,10 +204,8 @@ class ChessFactory(Factory):
         user = self.get_user(client, None)
         user2 = self.get_user(None, user["status"])
 
-        self.send_to_client(user2["client"], "/Draw")
-
-        user["status"] = "/idle"
-        user2["status"] = "/idle"
+        self.draw_update(user, False)
+        self.draw_update(user2, True)
 
     def no_draw(self, client, msg):
         user = self.get_user(None, self.get_user(client, None)["status"])
@@ -270,23 +214,111 @@ class ChessFactory(Factory):
 
     def surrender(self, client, msg):
         user = self.get_user(client, None)
-        user2 = self.get_user(None, user["status"])
 
         if user["status"] != "/AI":
-            self.send_to_client(user2["client"], "/Win")
-            user2["status"] = "/idle"
+            user2 = self.get_user(None, user["status"])
 
-        user["status"] = "/idle"
+            self.win_update(user2)
+
+        self.lose_update(user, '0', '0', False)
 
     def logout(self, client, msg):
-        username = self.client[client]
+        user = self.get_user(client, None)
+
+        if user["status"] != "/idle" and user["status"] != "/AI":
+            user2 = self.get_user(None, user["status"])
+
+            self.win_update(user2)
+            self.lose_update(user, '0', '0', False)
 
         del self.client[client]
-        del self.nickname[self.username[username]["nickname"]]
-        del self.username[username]
+        del self.nickname[user["nickname"]]
+        del self.username[user["username"]]
 
         user_list = self.update_user_list()
         self.send_to_all(user_list)
+
+    def send_to_client(self, client, msg):
+        client.transport.write(msg)
+
+    def send_to_all(self, msg):
+        for client in self.client.keys():
+            self.send_to_client(client, msg)
+
+    def update_user_list(self):
+        user_list = "/UpdateUserList "
+        for nickname in self.nickname.keys():
+            user_list += nickname + ' '
+
+        return user_list[:-1]
+
+    def add_user(self, client, user):
+        username = str(user[0])
+        password = str(user[1])
+        nickname = str(user[2])
+        win = int(user[3])
+        lose = int(user[4])
+        draw = int(user[5])
+
+        msg = username + ' ' + password + ' ' + nickname + ' ' + str(win) + ' ' + str(lose) + ' ' + str(draw)
+        self.send_to_client(client, msg)
+
+        self.nickname[nickname] = username
+        self.username[username] = {
+            "client": client,
+            "username": username,
+            "password": password,
+            "nickname": nickname,
+            "win": win,
+            "lose": lose,
+            "draw": draw,
+            "status": "/idle",
+            "level": 0,
+            "chessBoard": chessBoard()
+        }
+
+        user_list = self.update_user_list()
+        self.send_to_all(user_list)
+
+        self.client[client] = username
+
+    def get_user(self, client, nickname):
+        if client is not None:
+            return self.username[self.client[client]]
+
+        elif nickname is not None:
+            return self.username[self.nickname[nickname]]
+
+        else:
+            return None
+
+    def win_update(self, user):
+        if user["status"] != "/AI":
+            user["win"] += 1
+            update(user["username"], None, None, user["win"], None, None)
+
+        user["status"] = "/idle"
+        self.send_to_client(user["client"], "/Win")
+
+    def lose_update(self, user, x, y, is_send):
+        if user["status"] != "/AI":
+            user["lose"] += 1
+            update(user["username"], None, None, None, user["lose"], None)
+
+        user["status"] = "/idle"
+
+        if is_send:
+            self.send_to_client(user["client"], "/Lose " + x + ' ' + y)
+
+    def draw_update(self, user, is_send):
+        if user["status"] != "/AI":
+            user["draw"] += 1
+            update(user["username"], None, None, None, None, user["draw"])
+
+        user["status"] = "/idle"
+
+        if is_send:
+            self.send_to_client(user["client"], "/Draw")
 
 
 reactor.listenTCP(7110, ChessFactory())
