@@ -171,9 +171,9 @@ class ChessFactory(Factory):
         self.send_to_client(client, "/NextStep 7 7")
 
     def next_step(self, client, msg):
-        x, y, chessType = msg.split(' ')
+        x, y, chess_type = msg.split(' ')
         user = self.get_user(client, None)
-        user["chessBoard"][int(y) * 15 + int(x)] = int(chessType)
+        user["chessBoard"][int(y) * 15 + int(x)] = int(chess_type)
 
         user["x"] = int(x)
         user["y"] = int(y)
@@ -183,9 +183,9 @@ class ChessFactory(Factory):
                 self.win_update(user)
 
             else:
-                nextStep = ai.GetAGoodMove(user["chessBoard"], 3)
-                a = nextStep / 100
-                b = nextStep - 100 * a
+                next_step = ai.GetAGoodMove(user["chessBoard"], 3)
+                a = next_step / 100
+                b = next_step - 100 * a
                 user["chessBoard"][b * 15 + a] = 0
 
                 if rule.GetIsWin(user["chessBoard"], a, b):
@@ -208,7 +208,7 @@ class ChessFactory(Factory):
                 user2["enemy_x"] = int(x)
                 user2["enemy_y"] = int(y)
 
-                user2["chessBoard"][int(y) * 15 + int(x)] = int(chessType)
+                user2["chessBoard"][int(y) * 15 + int(x)] = int(chess_type)
                 self.send_to_client(user2["client"], "/NextStep " + x + " " + y)
 
     def draw_chess(self, client, msg):
