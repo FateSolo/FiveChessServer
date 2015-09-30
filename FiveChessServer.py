@@ -43,6 +43,9 @@ class ChessFactory(Factory):
             "/Draw": self.draw,
             "/NoDraw": self.no_draw,
             "/Surrender": self.surrender,
+            "/RetractChess": self.retract_chess,
+            "/Retract": self.retract,
+            "/NoRetract": self.no_retract,
             "/Logout": self.logout
         }
 
@@ -140,6 +143,12 @@ class ChessFactory(Factory):
             user["chessBoard"][i] = 255
             user2["chessBoard"][i] = 255
 
+        user["x"] = -1
+        user["y"] = -1
+
+        user2["x"] = -1
+        user2["y"] = -1
+
         self.send_to_client(user2["client"], "/InviteSuccess 1")
 
     def invite_failed(self, client, msg):
@@ -153,6 +162,10 @@ class ChessFactory(Factory):
         for i in range(225):
             user["chessBoard"][i] = 255
         user["chessBoard"][112] = 0
+
+        user["x"] = -1
+        user["y"] = -1
+
         user["status"] = "/AI"
 
         self.send_to_client(client, "/NextStep 7 7")
@@ -161,6 +174,9 @@ class ChessFactory(Factory):
         x, y, chessType = msg.split(' ')
         user = self.get_user(client, None)
         user["chessBoard"][int(y) * 15 + int(x)] = int(chessType)
+
+        user["x"] = int(x)
+        user["y"] = int(y)
 
         if user["status"] == "/AI":
             if rule.GetIsWin(user["chessBoard"], int(x), int(y)):
@@ -176,6 +192,9 @@ class ChessFactory(Factory):
                     self.lose_update(user, str(a), str(b), True)
 
                 else:
+                    user["enemy_x"] = a
+                    user["enemy_y"] = b
+
                     self.send_to_client(client, "/NextStep " + str(a) + " " + str(b))
 
         else:
@@ -186,6 +205,9 @@ class ChessFactory(Factory):
                 self.lose_update(user2, x, y, True)
 
             else:
+                user2["enemy_x"] = int(x)
+                user2["enemy_y"] = int(y)
+
                 user2["chessBoard"][int(y) * 15 + int(x)] = int(chessType)
                 self.send_to_client(user2["client"], "/NextStep " + x + " " + y)
 
@@ -219,6 +241,34 @@ class ChessFactory(Factory):
             self.win_update(user2)
 
         self.lose_update(user, '0', '0', False)
+
+    def retract_chess(self, client, msg):
+        user = self.get_user(client, None)
+
+        if user["x"] == -1 or user["y"] == -1:
+            self.send_to_client(user["client"], "/NoRetract 0")
+
+        elif user["x"] == -2 or user["y"] == -2:
+            self.send_to_client(user["client"], "/NoRetract 1")
+
+        elif user["status"] == "/AI":
+            self.retract_update(user, True)
+
+        else:
+            self.send_to_client(self.get_user(None, user["status"])["client"], "/IsRetract " + str(user["x"]) + ' ' +
+                                str(user["y"]) + ' ' + str(user["enemy_x"]) + ' ' + str(user["enemy_y"]))
+
+    def retract(self, client, msg):
+        user = self.get_user(client, None)
+        user2 = self.get_user(None, user["status"])
+
+        self.retract_update(user, False)
+        self.retract_update(user2, True)
+
+    def no_retract(self, client, msg):
+        user = self.get_user(None, self.get_user(client, None)["status"])
+
+        self.send_to_client(user["client"], "/NoRetract 2")
 
     def logout(self, client, msg):
         user = self.get_user(client, None)
@@ -273,8 +323,7 @@ class ChessFactory(Factory):
             "lose": lose,
             "draw": draw,
             "status": "/idle",
-            "level": 0,
-            "chessBoard": chessBoard()
+            "chessBoard": chessBoard(),
         }
 
         user_list = self.update_user_list()
@@ -319,6 +368,17 @@ class ChessFactory(Factory):
 
         if is_send:
             self.send_to_client(user["client"], "/Draw")
+
+    def retract_update(self, user, is_send):
+        user["chessBoard"][user["y"] * 15 + user["x"]] = 255
+        user["chessBoard"][user["enemy_y"] * 15 + user["enemy_x"]] = 255
+
+        if is_send:
+            self.send_to_client(user["client"], "/Retract " + str(user["x"]) + ' ' + str(user["y"]) + ' ' + str(
+                user["enemy_x"]) + ' ' + str(user["enemy_y"]))
+
+        user["x"] = -2
+        user["y"] = -2
 
 
 reactor.listenTCP(7110, ChessFactory())
