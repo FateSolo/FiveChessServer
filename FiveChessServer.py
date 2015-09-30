@@ -110,9 +110,7 @@ class ChessFactory(Factory):
             self.send_to_client(client, "/AlterNameSuccess " + msg)
 
             user_list = self.update_user_list()
-            for key in self.client.keys():
-                if key != client:
-                    self.send_to_client(key, user_list)
+            self.send_to_all(user_list)
 
     def alter_password(self, client, msg):
         username = self.client[client]
@@ -239,6 +237,8 @@ class ChessFactory(Factory):
         self.send_to_all(user_list)
 
     def send_to_client(self, client, msg):
+        length = "%04d" % len(msg)
+        msg = length + msg
         client.transport.write(msg)
 
     def send_to_all(self, msg):
