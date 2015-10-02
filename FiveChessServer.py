@@ -136,20 +136,27 @@ class ChessFactory(Factory):
         user = self.get_user(client, None)
         user2 = self.get_user(None, msg)
 
-        user["status"] = user2["nickname"]
-        user2["status"] = user["nickname"]
+        if user["status"] != "/idle":
+            self.send_to_client(client, "/InviteFailed 2")
 
-        for i in range(225):
-            user["chessBoard"][i] = 255
-            user2["chessBoard"][i] = 255
+        elif user2["status"] != "/idle":
+            self.send_to_client(user2["client"], "/InviteFailed 3")
 
-        user["x"] = -1
-        user["y"] = -1
+        else:
+            user["status"] = user2["nickname"]
+            user2["status"] = user["nickname"]
 
-        user2["x"] = -1
-        user2["y"] = -1
+            for i in range(225):
+                user["chessBoard"][i] = 255
+                user2["chessBoard"][i] = 255
 
-        self.send_to_client(user2["client"], "/InviteSuccess 1")
+            user["x"] = -1
+            user["y"] = -1
+
+            user2["x"] = -1
+            user2["y"] = -1
+
+            self.send_to_client(user2["client"], "/InviteSuccess 1")
 
     def invite_failed(self, client, msg):
         user = self.get_user(None, msg)
@@ -167,6 +174,7 @@ class ChessFactory(Factory):
         user["y"] = -1
 
         user["status"] = "/AI"
+        user["level"] = int(msg)
 
         self.send_to_client(client, "/NextStep 7 7")
 
@@ -183,7 +191,7 @@ class ChessFactory(Factory):
                 self.win_update(user)
 
             else:
-                next_step = ai.GetAGoodMove(user["chessBoard"], 3)
+                next_step = ai.GetAGoodMove(user["chessBoard"], user["level"])
                 a = next_step / 100
                 b = next_step - 100 * a
                 user["chessBoard"][b * 15 + a] = 0
