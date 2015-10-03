@@ -156,7 +156,7 @@ class ChessFactory(Factory):
             user2["x"] = -1
             user2["y"] = -1
 
-            self.send_to_client(user2["client"], "/InviteSuccess 1")
+            self.send_to_client(user2["client"], "/InviteSuccess " + user["nickname"])
 
     def invite_failed(self, client, msg):
         user = self.get_user(None, msg)
