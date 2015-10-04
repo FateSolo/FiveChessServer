@@ -93,7 +93,19 @@ class ChessFactory(Factory):
         self.send_to_client(client, msg)
 
     def send_msg(self, client, msg):
-        self.send_to_all("/SendMsg " + msg)
+        user = self.get_user(client, None)
+        msg = "/SendMsg " + msg
+
+        if user["status"] == "/idle":
+            for value in self.username.values():
+                if value["status"] == "/idle":
+                    self.send_to_client(value["client"], msg)
+
+        else:
+            if user["status"] != "/AI":
+                self.send_to_client(self.get_user(None, user["status"])["client"], msg)
+
+            self.send_to_client(client, msg)
 
     def alter_name(self, client, msg):
         user = query(None, msg)
