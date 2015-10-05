@@ -38,6 +38,8 @@ class ChessFactory(Factory):
             "/InviteSuccess": self.invite_success,
             "/InviteFailed": self.invite_failed,
             "/BeginWithAI": self.begin_with_ai,
+            "/BeginWithOther": self.begin_with_other,
+            "/StopWithOther": self.stop_with_other,
             "/NextStep": self.next_step,
             "/DrawChess": self.draw_chess,
             "/Draw": self.draw,
@@ -52,6 +54,8 @@ class ChessFactory(Factory):
         self.client = {}
         self.nickname = {}
         self.username = {}
+
+        self.waiting = "/null"
 
     def login(self, client, msg):
         username, password = msg.split(' ')
@@ -96,9 +100,9 @@ class ChessFactory(Factory):
         user = self.get_user(client, None)
         msg = "/SendMsg " + msg
 
-        if user["status"] == "/idle":
+        if user["status"] == "/idle" or user["status"] == "/waiting":
             for value in self.username.values():
-                if value["status"] == "/idle":
+                if value["status"] == "/idle" or user["status"] == "/waiting":
                     self.send_to_client(value["client"], msg)
 
         else:
@@ -141,6 +145,9 @@ class ChessFactory(Factory):
         if user["status"] == "/idle":
             self.send_to_client(user["client"], "/Invited " + self.get_user(client, None)["nickname"])
 
+        elif user["status"] == "/waiting":
+            self.send_to_client(client, "/InviteFailed 1")
+
         else:
             self.send_to_client(client, "/InviteFailed 0")
 
@@ -149,10 +156,10 @@ class ChessFactory(Factory):
         user2 = self.get_user(None, msg)
 
         if user["status"] != "/idle":
-            self.send_to_client(client, "/InviteFailed 2")
+            self.send_to_client(client, "/InviteFailed 3")
 
         elif user2["status"] != "/idle":
-            self.send_to_client(user2["client"], "/InviteFailed 3")
+            self.send_to_client(user2["client"], "/InviteFailed 4")
 
         else:
             user["status"] = user2["nickname"]
@@ -173,7 +180,7 @@ class ChessFactory(Factory):
     def invite_failed(self, client, msg):
         user = self.get_user(None, msg)
 
-        self.send_to_client(user["client"], "/InviteFailed 1")
+        self.send_to_client(user["client"], "/InviteFailed 2")
 
     def begin_with_ai(self, client, msg):
         user = self.get_user(client, None)
@@ -189,6 +196,38 @@ class ChessFactory(Factory):
         user["level"] = int(msg)
 
         self.send_to_client(client, "/NextStep 7 7")
+
+    def begin_with_other(self, client, msg):
+        user = self.get_user(client, None)
+
+        if self.waiting == "/null":
+            user["status"] = "/waiting"
+            self.waiting = user["nickname"]
+
+        else:
+            user2 = self.get_user(None, self.waiting)
+
+            user["status"] = user2["nickname"]
+            user2["status"] = user["nickname"]
+
+            for i in range(225):
+                user["chessBoard"][i] = 255
+                user2["chessBoard"][i] = 255
+
+            user["x"] = -1
+            user["y"] = -1
+
+            user2["x"] = -1
+            user2["y"] = -1
+
+            self.send_to_client(user["client"], "/BeginWithOther " + user2["nickname"] + " 1")
+            self.send_to_client(user2["client"], "/BeginWithOther " + user["nickname"] + " 0")
+
+            self.waiting = "/null"
+
+    def stop_with_other(self, client, msg):
+        self.get_user(client, None)["status"] = "/idle"
+        self.waiting = "/null"
 
     def next_step(self, client, msg):
         x, y, chess_type = msg.split(' ')
@@ -293,7 +332,7 @@ class ChessFactory(Factory):
     def logout(self, client, msg):
         user = self.get_user(client, None)
 
-        if user["status"] != "/idle" and user["status"] != "/AI":
+        if user["status"] != "/idle" and user["status"] != "/AI" and user["status"] != "/waiting":
             user2 = self.get_user(None, user["status"])
 
             self.win_update(user2)
