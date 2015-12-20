@@ -128,8 +128,7 @@ class ChessFactory(Factory):
 
             self.send_to_client(client, "/AlterNameSuccess " + msg)
 
-            user_list = self.update_user_list()
-            self.send_to_all(user_list)
+            self.send_to_all(self.update_user_list())
 
     def alter_password(self, client, msg):
         username = self.client[client]
@@ -177,6 +176,8 @@ class ChessFactory(Factory):
 
             self.send_to_client(user2["client"], "/InviteSuccess " + user["nickname"])
 
+            self.send_to_all(self.update_user_list())
+
     def invite_failed(self, client, msg):
         user = self.get_user(None, msg)
 
@@ -196,6 +197,8 @@ class ChessFactory(Factory):
         user["level"] = int(msg)
 
         self.send_to_client(client, "/NextStep 7 7")
+
+        self.send_to_all(self.update_user_list())
 
     def begin_with_other(self, client, msg):
         user = self.get_user(client, None)
@@ -225,9 +228,13 @@ class ChessFactory(Factory):
 
             self.waiting = "/null"
 
+        self.send_to_all(self.update_user_list())
+
     def stop_with_other(self, client, msg):
         self.get_user(client, None)["status"] = "/idle"
         self.waiting = "/null"
+
+        self.send_to_all(self.update_user_list())
 
     def next_step(self, client, msg):
         x, y, chess_type = msg.split(' ')
@@ -241,6 +248,8 @@ class ChessFactory(Factory):
             if rule.GetIsWin(user["chessBoard"], int(x), int(y)):
                 self.win_update(user)
 
+                self.send_to_all(self.update_user_list())
+
             else:
                 next_step = ai.GetAGoodMove(user["chessBoard"], user["level"])
                 a = next_step / 100
@@ -249,6 +258,8 @@ class ChessFactory(Factory):
 
                 if rule.GetIsWin(user["chessBoard"], a, b):
                     self.lose_update(user, str(a), str(b), True)
+
+                    self.send_to_all(self.update_user_list())
 
                 else:
                     user["enemy_x"] = a
@@ -263,6 +274,8 @@ class ChessFactory(Factory):
                 self.win_update(user)
                 self.lose_update(user2, x, y, True)
 
+                self.send_to_all(self.update_user_list())
+
             else:
                 user2["enemy_x"] = int(x)
                 user2["enemy_y"] = int(y)
@@ -276,6 +289,8 @@ class ChessFactory(Factory):
         if user["status"] == "/AI":
             self.draw_update(user, True)
 
+            self.send_to_all(self.update_user_list())
+
         else:
             self.send_to_client(self.get_user(None, user["status"])["client"], "/IsDraw")
 
@@ -285,6 +300,8 @@ class ChessFactory(Factory):
 
         self.draw_update(user, False)
         self.draw_update(user2, True)
+
+        self.send_to_all(self.update_user_list())
 
     def no_draw(self, client, msg):
         user = self.get_user(None, self.get_user(client, None)["status"])
@@ -300,6 +317,8 @@ class ChessFactory(Factory):
             self.win_update(user2)
 
         self.lose_update(user, '0', '0', False)
+
+        self.send_to_all(self.update_user_list())
 
     def retract_chess(self, client, msg):
         user = self.get_user(client, None)
@@ -342,8 +361,7 @@ class ChessFactory(Factory):
         del self.nickname[user["nickname"]]
         del self.username[user["username"]]
 
-        user_list = self.update_user_list()
-        self.send_to_all(user_list)
+        self.send_to_all(self.update_user_list())
 
     def send_to_client(self, client, msg):
         length = "%04d" % len(msg)
@@ -357,7 +375,7 @@ class ChessFactory(Factory):
     def update_user_list(self):
         user_list = "/UpdateUserList "
         for nickname in self.nickname.keys():
-            user_list += nickname + ' '
+            user_list += nickname + ' ' + self.get_user(None, nickname)["status"] + ' '
 
         return user_list[:-1]
 
@@ -385,8 +403,7 @@ class ChessFactory(Factory):
             "chessBoard": chessBoard(),
         }
 
-        user_list = self.update_user_list()
-        self.send_to_all(user_list)
+        self.send_to_all(self.update_user_list())
 
         self.client[client] = username
 
