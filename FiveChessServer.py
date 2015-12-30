@@ -25,9 +25,7 @@ class ChessServer(Protocol):
 class ChessFactory(ServerFactory):
     protocol = ChessServer
 
-    def __init__(self, service):
-        self.service = service
-
+    def __init__(self):
         self.handler = {
             "/Login": self.login,
             "/Register": self.register,
@@ -459,26 +457,8 @@ class ChessFactory(ServerFactory):
         user["y"] = -2
 
 
-class ChessService(service.Service):
-    def startService(self):
-        service.Service.startService(self)
+application = service.Application("FiveChessServer", uid=0, gid=0)
 
-    def stopService(self):
-        return self._port.stopListening()
+factory = ChessFactory()
 
-
-port = 7110
-ip = '123.56.247.34'
-
-top_service = service.MultiService()
-
-chess_service = ChessService()
-chess_service.setServiceParent(top_service)
-
-factory = ChessFactory(ChessService)
-
-tcp_service = internet.TCPServer(port, factory, interface=ip)
-
-application = service.Application("FiveChessServer")
-
-top_service.setServiceParent(application)
+internet.TCPServer(7110, factory).setServiceParent(service.IServiceCollection(application))
