@@ -5,8 +5,8 @@ import sys
 reload(sys)
 sys.setdefaultencoding('utf8')
 
-from twisted.internet.protocol import Factory, Protocol
-from twisted.internet import reactor
+from twisted.application import service, internet
+from twisted.internet.protocol import ServerFactory, Protocol
 from Database import *
 from ctypes import *
 
@@ -22,10 +22,12 @@ class ChessServer(Protocol):
         self.factory.handler[msg_type](self, msg)
 
 
-class ChessFactory(Factory):
+class ChessFactory(ServerFactory):
     protocol = ChessServer
 
-    def __init__(self):
+    def __init__(self, service):
+        self.service = service
+
         self.handler = {
             "/Login": self.login,
             "/Register": self.register,
@@ -92,7 +94,7 @@ class ChessFactory(Factory):
     def get_user_info(self, client, msg):
         user = self.get_user(None, msg)
         msg = "/UserInfo " + user["nickname"] + ' ' + str(user["win"]) + ' ' + str(user["lose"]) + ' ' + str(
-            user["draw"])
+                user["draw"])
 
         self.send_to_client(client, msg)
 
@@ -451,11 +453,32 @@ class ChessFactory(Factory):
 
         if is_send:
             self.send_to_client(user["client"], "/Retract " + str(user["x"]) + ' ' + str(user["y"]) + ' ' + str(
-                user["enemy_x"]) + ' ' + str(user["enemy_y"]))
+                    user["enemy_x"]) + ' ' + str(user["enemy_y"]))
 
         user["x"] = -2
         user["y"] = -2
 
 
-reactor.listenTCP(7110, ChessFactory())
-reactor.run()
+class ChessService(service.Service):
+    def startService(self):
+        service.Service.startService(self)
+
+    def stopService(self):
+        return self._port.stopListening()
+
+
+port = 7110
+ip = '123.56.247.34'
+
+top_service = service.MultiService()
+
+chess_service = ChessService()
+chess_service.setServiceParent(top_service)
+
+factory = ChessFactory(ChessService)
+
+tcp_service = internet.TCPServer(port, factory, interface=ip)
+
+application = service.Application("FiveChessServer")
+
+top_service.setServiceParent(application)
