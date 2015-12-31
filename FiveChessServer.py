@@ -5,6 +5,7 @@ import sys
 reload(sys)
 sys.setdefaultencoding('utf8')
 
+from twisted.internet import reactor
 from twisted.application import service, internet
 from twisted.internet.protocol import ServerFactory, Protocol
 from Database import *
@@ -12,6 +13,7 @@ from ctypes import *
 
 ai = cdll.LoadLibrary("./FiveChessAI.so")
 rule = cdll.LoadLibrary("./FiveChessRule.so")
+threat = cdll.LoadLibrary("./ThreatJudgement.so")
 chessBoard = c_ubyte * 225
 
 
@@ -193,6 +195,9 @@ class ChessFactory(ServerFactory):
         user["x"] = -1
         user["y"] = -1
 
+        user["enemy_x"] = 0
+        user["enemy_y"] = 0
+
         user["status"] = "/AI"
         user["level"] = int(msg)
 
@@ -251,8 +256,12 @@ class ChessFactory(ServerFactory):
                 self.send_to_all(self.update_user_list())
 
             else:
-                next_step = ai.GetAGoodMove(user["chessBoard"], user["level"])
-                a = int(next_step / 100)
+                next_step = threat.GetThreat(user["chessBoard"], user["enemy_x"], user["enemy_y"], int(x), int(y))
+
+                if next_step == -1:
+                    next_step = ai.GetAGoodMove(user["chessBoard"], user["level"])
+
+                a = next_step / 100
                 b = next_step - 100 * a
                 user["chessBoard"][b * 15 + a] = 0
 
@@ -456,9 +465,11 @@ class ChessFactory(ServerFactory):
         user["x"] = -2
         user["y"] = -2
 
+reactor.listenTCP(7110, ChessFactory())
+reactor.run()
 
-application = service.Application("FiveChessServer", uid=0, gid=0)
-
-factory = ChessFactory()
-
-internet.TCPServer(7110, factory).setServiceParent(service.IServiceCollection(application))
+# application = service.Application("FiveChessServer", uid=0, gid=0)
+#
+# factory = ChessFactory()
+#
+# internet.TCPServer(7110, factory).setServiceParent(service.IServiceCollection(application))
