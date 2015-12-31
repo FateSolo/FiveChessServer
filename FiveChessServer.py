@@ -5,7 +5,6 @@ import sys
 reload(sys)
 sys.setdefaultencoding('utf8')
 
-from twisted.internet import reactor
 from twisted.application import service, internet
 from twisted.internet.protocol import ServerFactory, Protocol
 from Database import *
@@ -465,11 +464,9 @@ class ChessFactory(ServerFactory):
         user["x"] = -2
         user["y"] = -2
 
-reactor.listenTCP(7110, ChessFactory())
-reactor.run()
 
-# application = service.Application("FiveChessServer", uid=0, gid=0)
-#
-# factory = ChessFactory()
-#
-# internet.TCPServer(7110, factory).setServiceParent(service.IServiceCollection(application))
+application = service.Application("FiveChessServer", uid=0, gid=0)
+
+factory = ChessFactory()
+
+internet.TCPServer(7110, factory).setServiceParent(service.IServiceCollection(application))
