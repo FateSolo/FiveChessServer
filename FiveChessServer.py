@@ -260,7 +260,7 @@ class ChessFactory(ServerFactory):
                 if next_step == -1:
                     next_step = ai.GetAGoodMove(user["chessBoard"], user["level"])
 
-                a = next_step / 100
+                a = int(next_step / 100)
                 b = next_step - 100 * a
                 user["chessBoard"][b * 15 + a] = 0
 
