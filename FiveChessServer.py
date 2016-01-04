@@ -1,3 +1,4 @@
+# coding=utf-8
 __author__ = 'Fate'
 
 import sys
@@ -27,9 +28,10 @@ class ChessFactory(ServerFactory):
     protocol = ChessServer
 
     def __init__(self):
+        # 函数字典
         self.handler = {
-            "/Login": self.login,
-            "/Register": self.register,
+            "/Login": self.login,                       #登录
+            "/Register": self.register,                 #注册
             "/GetUserList": self.get_user_list,
             "/GetUserInfo": self.get_user_info,
             "/SendMsg": self.send_msg,
